@@ -1,4 +1,4 @@
-# \[Julie-Ida-Ida\]
+# \Julie-Ida-Ida\
 
 **Group members:**
 - Julie Danneberg Voss
