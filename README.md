@@ -1,9 +1,9 @@
-# \[Group name\]
+# \[Julie-Ida-Ida\]
 
 **Group members:**
-- A
-- B
-- C
+- Julie Danneberg Voss
+- Ida Marie Krogh Jensen
+- Ida Margrethe Stagsted
 
 This repository contains  
 1. Inaugural project. 
