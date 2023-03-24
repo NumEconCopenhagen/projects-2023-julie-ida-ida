@@ -54,8 +54,6 @@ class HouseholdSpecializationModelClass:
         C = par.wM*LM + par.wF*LF
 
         # b. home production
-
-        
         if par.sigma == 0:
             H = np.min(HM,HF)
         elif par.sigma == 1:
@@ -112,6 +110,28 @@ class HouseholdSpecializationModelClass:
                 print(f'{k} = {v:6.4f}')
 
         return opt
+
+    def ratio(self):
+        function_ny = self.function_ny
+
+        function_ny.HM_wage_vec = ()
+        function_ny.HF_wage_vec = ()
+        wF = (0.8, 0.9, 1.0, 1.1, 1.2)
+
+
+        # b. for loop
+        for wages in wF:
+        par.wF = wages
+        function_ny.solution_wage.append(self.solve_cont())
+            
+        #c. extracting results
+        function_ny.HF_wage_vec = [ns[3] for ns in function_ny.solution_wage]
+        function_ny.HM_wage_vec = [ns[2] for ns in function_ny.solution_wage]
+
+        function_ny.ratio_H = [np.log(HF_ny/HM_ny) for HF_ny, HM_ny in zip(function_ny.HF_wage_vec, function_ny.HM_wage_vec)]
+        function_ny.ratio_w = np.log(wF)  
+
+
 
     def solve(self,do_print=False):
         """ solve model continously """
