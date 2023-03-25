@@ -132,11 +132,35 @@ class HouseholdSpecializationModelClass:
         function_ny.ratio_w = np.log(wF)  
 
 
-
-    def solve(self,do_print=False):
+    def solve_con(self,do_print=False):
         """ solve model continously """
 
-        pass    
+        par = self.par
+        sol = self.sol
+        opt = SimpleNamespace()  
+
+        def cont(x):
+            return -self.calc_utility(*x)
+        
+        test = lambda LM, HM, LF, HF: (LM+HM > 24) | (LF+HF > 24)
+        constraints = ({'type': 'ineq', 'fun':test})
+        bounds = [(0,24)]*4
+        guess = [2*12/2]*4
+
+        solution = optimize.minimize(cont,
+                                   guess,
+                                   method='SLSQP',
+                                   bounds=bounds,
+                                   constraints=constraints)
+
+            
+        LM_ny = solution.x[0]
+        HM_ny = solution.x[1]
+        LF_ny = solution.x[2]
+        HF_ny = solution.x[3]
+        
+        return LM_ny,HM_ny,LF_ny,HF_ny
+
 
     def solve_wF_vec(self,discrete=False):
         """ solve model for vector of female wages """
