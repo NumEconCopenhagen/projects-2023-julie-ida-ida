@@ -121,8 +121,8 @@ class HouseholdSpecializationModelClass:
 
         # b. for loop
         for wages in wF:
-        par.wF = wages
-        function_ny.solution_wage.append(self.solve_cont())
+            function_ny.par.wF = wages
+            function_ny.solution_wage.append(self.solve_cont())
             
         #c. extracting results
         function_ny.HF_wage_vec = [ns[3] for ns in function_ny.solution_wage]
