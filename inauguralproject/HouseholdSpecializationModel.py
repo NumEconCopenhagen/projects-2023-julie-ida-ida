@@ -128,8 +128,8 @@ class HouseholdSpecializationModelClass:
         function_ny.HF_wage_vec = [ns[3] for ns in function_ny.solution_wage]
         function_ny.HM_wage_vec = [ns[2] for ns in function_ny.solution_wage]
 
-        function_ny.ratio_H = [np.log(HF_ny/HM_ny) for HF_ny, HM_ny in zip(function_ny.HF_wage_vec, function_ny.HM_wage_vec)]
-        function_ny.ratio_w = np.log(wF)  
+        function_ny.H_ratio = [np.log(HF_ny/HM_ny) for HF_ny, HM_ny in zip(function_ny.HF_wage_vec, function_ny.HM_wage_vec)]
+        function_ny.w_ratio = np.log(wF)  
 
 
     def solve_con(self,do_print=False):
@@ -139,27 +139,46 @@ class HouseholdSpecializationModelClass:
         sol = self.sol
         opt = SimpleNamespace()  
 
-        def cont(x):
+        def objective(x):
             return -self.calc_utility(*x)
-        
-        test = lambda LM, HM, LF, HF: (LM+HM > 24) | (LF+HF > 24)
-        constraints = ({'type': 'ineq', 'fun':test})
-        bounds = [(0,24)]*4
-        guess = [2*12/2]*4
 
-        solution = optimize.minimize(cont,
-                                   guess,
-                                   method='SLSQP',
-                                   bounds=bounds,
-                                   constraints=constraints)
+        test_1 = lambda LM, HM, LF, HF: (LM+HM > 24) | (LF+HF > 24)
+        constraints = ({'type':'ineq','fun':test_1})
+        bounds = [(1e-8,24-1e-8)]*4
+        #guess = [2*12/2]*4
+
+        x0 = [1,1,1,1]
+        solution = optimize.minimize(objective,x0)
+
+        #solution = optimize.minimize(cont,
+                                   #guess,
+                                   #method='SLSQP',
+                                   #bounds=bounds,
+                                   #constraints=constraints)
 
             
-        LM_ny = solution.x[0]
-        HM_ny = solution.x[1]
-        LF_ny = solution.x[2]
-        HF_ny = solution.x[3]
+        LM = solution.x[0]
+        HM = solution.x[1]
+        LF = solution.x[2]
+        HF = solution.x[3]
         
-        return LM_ny,HM_ny,LF_ny,HF_ny
+        return LM, LF, HM, HF 
+
+        #Andet
+        #function_ny.HM_con_vec = ()
+        #function_ny.HF_con_vec = ()
+        #wF = (0.8, 0.9, 1.0, 1.1, 1.2)
+
+        #for wages in wF:
+            #function_ny.par.wF = wages
+            #function_ny.solution_con.append(self.solve_con())
+            
+        #c. extracting results
+        #function_ny.HF_con_vec = [ns[3] for ns in function_ny.solution_con]
+        #function_ny.HM_con_vec = [ns[2] for ns in function_ny.solution_con]
+
+        #function_ny.H_ratio_con = [np.log(HF_a/HM_a) for HF_a, HM_a in zip(function_ny.HF_con_vec, function_ny.HM_con_vec)]
+        #function_ny.w_ratio_con = np.log(wF)  
 
 
     def solve_wF_vec(self,discrete=False):
