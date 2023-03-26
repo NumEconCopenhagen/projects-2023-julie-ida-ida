@@ -142,19 +142,16 @@ class HouseholdSpecializationModelClass:
         def objective(x):
             return -self.calc_utility(*x)
 
-        test_1 = lambda LM, HM, LF, HF: (LM+HM > 24) | (LF+HF > 24)
-        constraints = ({'type':'ineq','fun':test_1})
+        constraints = [{'type':'ineq','fun': lambda x: 24 - x[0] - x[1]},
+                       {'type':'ineq','fun': lambda x: 24 - x[0] - x[1]}]
         bounds = [(1e-8,24-1e-8)]*4
         guess = [2*12/2]*4
 
-        x0 = [2,2,2,2]
-        solution = optimize.minimize(objective,x0)
-
-        #solution = optimize.minimize(objective,
-                                   #guess,
-                                   #method='SLSQP',
-                                   #bounds=bounds,
-                                   #constraints=constraints)
+        solution = optimize.minimize(objective,
+                                   guess,
+                                   method='SLSQP',
+                                   bounds=bounds,
+                                   constraints=constraints)
 
             
         LM = solution.x[0]
