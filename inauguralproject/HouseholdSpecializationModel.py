@@ -164,8 +164,6 @@ class HouseholdSpecializationModelClass:
 
 
     def solve_wF_vec(self,discrete=False):
-        """ solve model for vector of female wages """
-
         func = self.func
 
         par = self.par
@@ -173,16 +171,20 @@ class HouseholdSpecializationModelClass:
 
         wM = 1.0
         wF = (0.8, 0.9, 1.0, 1.1, 1.2)
-
         par.beta0_target = 0.4
         par.beta1_target = -0.1
+
+        for it in range(par.wF_vec.size):
+            par.wF = par.wF_vec[it]
+            if discrete == True:
+                res = self.solve_discrete()
+            else:    
+                res = self.solve_con()
+                sol.LM_vec[it] = res[0]
+                sol.HM_vec[it] = res[1]
+                sol.LF_vec[it] = res[2]
+                sol.HF_vec[it] = res[3]
         
-        H_ratio, w_ratio = self.ratio()
-        slope, intercept = stats.linregress(self.ratio.H_ratio,self.ratio.w_ratio)
-        beta0 = intercept
-        beta1 = slope
-        reg = (par.beta0_target - beta0)**2 + (par.beta1_target - beta1)**2
-        return reg
 
     def run_regression(self):
         """ run regression """
@@ -197,21 +199,30 @@ class HouseholdSpecializationModelClass:
     
     def estimate(self,alpha=None,sigma=None):
         """ estimate alpha and sigma """
+        par = self.par
+        sol = self.sol
 
-        constraints_beta = [{'type':'ineq','fun': lambda y: 24 - y[0] - y[1]},
-                            {'type':'ineq','fun': lambda y: 24 - y[2] - y[3]}]
-        bounds_beta = [(1e-8,24-1e-8)]*4
-        guess_beta = [2*12/2]*4
+        obj = lambda x: self.est(x)
+        result = optimize.minimize(obj,
+                                   x0 = [0.1, 0.1],
+                                   method='Nelder-Mead'
+                                   )
+        return 
 
-        solution = optimize.minimize(reg_4,
-                                   guess_beta,
-                                   method='SLSQP',
-                                   bounds=bounds_beta,
-                                   constraints=constraints_beta)
+    def est(self,x):
+        """ estimate alpha and sigma """
+        
+        par = self.par
+        sol = self.sol
 
-        wM = solution.y[0]
-        HM = solution.y[1]
-        wF = solution.y[2]
-        HF = solution.y[3]
+        alpha = x[0]
+        sigma = x[1]
 
-        return wM, HM, wF, HF
+        H_ratio, w_ratio = self.ratio()
+        slope, intercept = stats.linregress(self.ratio.H_ratio,self.ratio.w_ratio)
+        beta0 = intercept
+        beta1 = slope
+        self.solve_wF_vec()
+        self.run_regression()
+        reg = (par.beta0_target - sol.beta0)**2 + (par.beta1_target - sol.beta1)**2
+        return reg
