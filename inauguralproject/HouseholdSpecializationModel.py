@@ -3,6 +3,7 @@ from types import SimpleNamespace
 
 import numpy as np
 from scipy import optimize
+import scipy.stats as stats
 
 import pandas as pd 
 import matplotlib.pyplot as plt
@@ -143,7 +144,7 @@ class HouseholdSpecializationModelClass:
             return -self.calc_utility(*x)
 
         constraints = [{'type':'ineq','fun': lambda x: 24 - x[0] - x[1]},
-                       {'type':'ineq','fun': lambda x: 24 - x[0] - x[1]}]
+                       {'type':'ineq','fun': lambda x: 24 - x[2] - x[2]}]
         bounds = [(1e-8,24-1e-8)]*4
         guess = [2*12/2]*4
 
@@ -165,7 +166,23 @@ class HouseholdSpecializationModelClass:
     def solve_wF_vec(self,discrete=False):
         """ solve model for vector of female wages """
 
-        pass
+        func = self.func
+
+        par = self.par
+        sol = self.sol
+
+        wM = 1.0
+        wF = (0.8, 0.9, 1.0, 1.1, 1.2)
+
+        par.beta0_target = 0.4
+        par.beta1_target = -0.1
+        
+        H_ratio, w_ratio = self.ratio()
+        slope, intercept = stats.linregress(self.ratio.H_ratio,self.ratio.w_ratio)
+        beta0 = intercept
+        beta1 = slope
+        reg = (par.beta0_target - beta0)**2 + (par.beta1_target - beta1)**2
+        return reg
 
     def run_regression(self):
         """ run regression """
@@ -181,4 +198,20 @@ class HouseholdSpecializationModelClass:
     def estimate(self,alpha=None,sigma=None):
         """ estimate alpha and sigma """
 
-        pass
+        constraints_beta = [{'type':'ineq','fun': lambda y: 24 - y[0] - y[1]},
+                            {'type':'ineq','fun': lambda y: 24 - y[2] - y[3]}]
+        bounds_beta = [(1e-8,24-1e-8)]*4
+        guess_beta = [2*12/2]*4
+
+        solution = optimize.minimize(reg_4,
+                                   guess_beta,
+                                   method='SLSQP',
+                                   bounds=bounds_beta,
+                                   constraints=constraints_beta)
+
+        wM = solution.y[0]
+        HM = solution.y[1]
+        wF = solution.y[2]
+        HF = solution.y[3]
+
+        return wM, HM, wF, HF
