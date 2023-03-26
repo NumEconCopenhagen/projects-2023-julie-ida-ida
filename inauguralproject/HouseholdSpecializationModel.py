@@ -168,28 +168,6 @@ class HouseholdSpecializationModelClass:
         
         return LM, LF, HM, HF 
 
-
-    def solve_wF_vec(self,discrete=False):
-        func = self.func
-
-        par = self.par
-        sol = self.sol
-
-        wM = 1.0
-        wF = (0.8, 0.9, 1.0, 1.1, 1.2)
-
-        par.beta0_target = 0.4
-        par.beta1_target = -0.1
-
-        H_ratio, w_ratio = self.ratio()
-
-        slope, intercept = stats.linregress(self.ratio.H_ratio,self.ratio.w_ratio)
-
-        beta0 = intercept
-        beta1 = slope
-
-        reg = (par.beta0_target - beta0)**2 + (par.beta1_target - beta1)**2
-        return reg
     
     def run_regression(self):
         """ run regression """
@@ -201,23 +179,4 @@ class HouseholdSpecializationModelClass:
         y = np.log(sol.HF_vec/sol.HM_vec)
         A = np.vstack([np.ones(x.size),x]).T
         sol.beta0,sol.beta1 = np.linalg.lstsq(A,y,rcond=None)[0]
-    
-    def estimate(self):
-        """ estimate alpha and sigma """
-        par = self.par
-        sol = self.sol
-
-        def estimate_alpha_sigma(x):
-            return -self.calc_utility(*x)
-        
-        bounds_beta = [(1e-8,24-1e-8)]*2
-        guess_beta = (0.1, 0.2)
-
-        result_beta = optimize.minimize(estimate_alpha_sigma,
-                                        guess_beta,
-                                        method='SLSQP',
-                                        bounds=bounds_beta,)
-    
-        opt_alpha, opt_sigma = result_beta.x
-        return opt_alpha, opt_sigma
     
