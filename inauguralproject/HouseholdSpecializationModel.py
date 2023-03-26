@@ -180,7 +180,8 @@ class HouseholdSpecializationModelClass:
         A = np.vstack([np.ones(x.size),x]).T
         sol.beta0,sol.beta1 = np.linalg.lstsq(A,y,rcond=None)[0]
     
-
+    
+# The following code is not in use for the assignment
     def solution_alpha_sigma(self):
 
         par = self.par
