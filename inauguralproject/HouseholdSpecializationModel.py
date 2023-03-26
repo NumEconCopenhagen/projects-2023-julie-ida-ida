@@ -113,24 +113,30 @@ class HouseholdSpecializationModelClass:
         return opt
 
     def ratio(self):
-        function_ny = self.function_ny
 
-        function_ny.HM_wage_vec = ()
-        function_ny.HF_wage_vec = ()
+        sol = self.sol
+        par = self.par
+
+        sol.HM_wage_vec = []
+        sol.HF_wage_vec = []
         wF = (0.8, 0.9, 1.0, 1.1, 1.2)
 
 
         # b. for loop
         for wages in wF:
-            function_ny.par.wF = wages
-            function_ny.solution_wage.append(self.solve_cont())
+            par.wF = wages
+            _, _, HM, HF = self.solve_con()
+            sol.HM_wage_vec.append(HM)
+            sol.HF_wage_vec.append(HF)
             
         #c. extracting results
-        function_ny.HF_wage_vec = [ns[3] for ns in function_ny.solution_wage]
-        function_ny.HM_wage_vec = [ns[2] for ns in function_ny.solution_wage]
+        #HF_wage_vec = [ns[3] for ns in sol.solution_wage]
+        #HM_wage_vec = [ns[2] for ns in sol.solution_wage]
 
-        function_ny.H_ratio = [np.log(HF_ny/HM_ny) for HF_ny, HM_ny in zip(function_ny.HF_wage_vec, function_ny.HM_wage_vec)]
-        function_ny.w_ratio = np.log(wF)  
+        H_ratio = [np.log(HF_ny/HM_ny) for HF_ny, HM_ny in zip(sol.HF_wage_vec, sol.HM_wage_vec)]
+        w_ratio = np.log(wF)  
+
+        return H_ratio, w_ratio
 
 
     def solve_con(self,do_print=False):
