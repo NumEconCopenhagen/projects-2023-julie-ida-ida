@@ -171,21 +171,20 @@ class HouseholdSpecializationModelClass:
 
         wM = 1.0
         wF = (0.8, 0.9, 1.0, 1.1, 1.2)
+
         par.beta0_target = 0.4
         par.beta1_target = -0.1
 
-        for it in range(par.wF_vec.size):
-            par.wF = par.wF_vec[it]
-            if discrete == True:
-                res = self.solve_discrete()
-            else:    
-                res = self.solve_con()
-                sol.LM_vec[it] = res[0]
-                sol.HM_vec[it] = res[1]
-                sol.LF_vec[it] = res[2]
-                sol.HF_vec[it] = res[3]
-        
+        H_ratio, w_ratio = self.ratio()
 
+        slope, intercept = stats.linregress(self.ratio.H_ratio,self.ratio.w_ratio)
+
+        beta0 = intercept
+        beta1 = slope
+
+        reg = (par.beta0_target - beta0)**2 + (par.beta1_target - beta1)**2
+        return reg
+    
     def run_regression(self):
         """ run regression """
 
@@ -197,32 +196,22 @@ class HouseholdSpecializationModelClass:
         A = np.vstack([np.ones(x.size),x]).T
         sol.beta0,sol.beta1 = np.linalg.lstsq(A,y,rcond=None)[0]
     
-    def estimate(self,alpha=None,sigma=None):
+    def estimate(self):
         """ estimate alpha and sigma """
         par = self.par
         sol = self.sol
 
-        obj = lambda x: self.est(x)
-        result = optimize.minimize(obj,
-                                   x0 = [0.1, 0.1],
-                                   method='Nelder-Mead'
-                                   )
-        return 
-
-    def est(self,x):
-        """ estimate alpha and sigma """
+        def estimate_alpha_sigma(x):
+            return -self.calc_utility(*x)
         
-        par = self.par
-        sol = self.sol
+        bounds_beta = [(1e-8,24-1e-8)]*2
+        guess_beta = (0.1, 0.2)
 
-        alpha = x[0]
-        sigma = x[1]
-
-        H_ratio, w_ratio = self.ratio()
-        slope, intercept = stats.linregress(self.ratio.H_ratio,self.ratio.w_ratio)
-        beta0 = intercept
-        beta1 = slope
-        self.solve_wF_vec()
-        self.run_regression()
-        reg = (par.beta0_target - sol.beta0)**2 + (par.beta1_target - sol.beta1)**2
-        return reg
+        result_beta = optimize.minimize(estimate_alpha_sigma,
+                                        guess_beta,
+                                        method='SLSQP',
+                                        bounds=bounds_beta,)
+    
+        opt_alpha, opt_sigma = result_beta.x
+        return opt_alpha, opt_sigma
+    
