@@ -156,9 +156,10 @@ class HouseholdSpecializationModelClass:
 
         solution = optimize.minimize(objective,
                                    guess,
-                                   method='SLSQP',
+                                   method='Nelder-Mead',
                                    bounds=bounds,
-                                   constraints=constraints)
+                                   constraints=constraints,
+                                   tol=1e-10)
 
             
         LM = solution.x[0]
@@ -168,7 +169,12 @@ class HouseholdSpecializationModelClass:
         
         return LM, LF, HM, HF 
 
+    def solve_wF_vec(self,discrete=False):
+        """ solve model for vector of female wages """
+
+        pass
     
+
     def run_regression(self):
         """ run regression """
 
@@ -180,41 +186,8 @@ class HouseholdSpecializationModelClass:
         A = np.vstack([np.ones(x.size),x]).T
         sol.beta0,sol.beta1 = np.linalg.lstsq(A,y,rcond=None)[0]
     
-    
-# The following code is not in use for the assignment
-    def solution_alpha_sigma(self):
 
-        par = self.par
-        sol = self.sol
+    def estimate(self,alpha=None,sigma=None):
+        """ estimate alpha and sigma """
 
-        H_ratio, w_ratio = self.ratio_con()
-
-        slope, intercept, _, _, _ = stats.linregress(H_ratio, w_ratio)
-
-        beta0 = intercept
-        beta1 = slope
-        beta0_target = 0.4
-        beta1_target = -0.1
-
-        reg = (beta0_target - beta0)**2 + (beta1_target - beta1)**2
-        return reg
-    
-    def estimate_alpha_sigma(self,parameters):
-        
-        par = self.par
-        sol = self.sol
-
-        alpha, sigma = parameters 
-
-        alpha = par.alpha
-        sigma = par.sigma
-
-        bounds_beta = [(1e-8,24-1e-8)]*2
-        guess_beta = (0.1, 0.2)
-
-        result_beta = optimize.minimize(estimate_alpha_sigma,
-                                        guess_beta,
-                                        method='Nelder-Mead',
-                                        bounds=bounds_beta)
-    
-    opt_alpha, opt_sigma = result_beta.x
+        pass
