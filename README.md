@@ -7,5 +7,5 @@
 
 This repository contains  
 1. Inaugural project. 
-2. Data project. We fetch data from **HouseholdSpecializationModel.py**.
-3. Model project. We model how hours working at home and how hours working at the market affects the wages. 
+2. Data project. We fetch data from Denmarks Statistics (DST). We use the wage for men and woman in Denmark (LONS50) together with GDP data for Denmark (NAHO2). 
+3. Model project. We model ...
