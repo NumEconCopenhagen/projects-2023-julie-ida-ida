@@ -171,9 +171,35 @@ class HouseholdSpecializationModelClass:
 
     def solve_wF_vec(self,discrete=False):
         """ solve model for vector of female wages """
+       
+        par = self.par
+        sol = self.sol
+        opt = SimpleNamespace() 
 
-        pass
-    
+        for i,wF in enumerate(par.wF_vec):
+            par.wF = wF
+
+            def objective4(x):
+                return -self.calc_utility(*x)
+
+            bounds = [(1e-8,24-1e-8)]*4
+            guess = [2*12/2]*4
+            
+
+            solution4 = optimize.minimize(objective4,
+                                   guess,
+                                   method='Nelder-Mead',
+                                   bounds=bounds,
+                                   tol=1e-10)
+
+            maxHM = solution4.x[1]
+            maxHF = solution4.x[3]
+
+            sol.HM_vec[i] = solution4.x[1]
+            sol.HF_vec[i] = solution4.x[3]
+
+        return sol.HM_vec, sol.HF_vec
+
 
     def run_regression(self):
         """ run regression """
@@ -187,7 +213,41 @@ class HouseholdSpecializationModelClass:
         sol.beta0,sol.beta1 = np.linalg.lstsq(A,y,rcond=None)[0]
     
 
-    def estimate(self,alpha=None,sigma=None):
+    def loss(self, x):
         """ estimate alpha and sigma """
+         
+        par = self.par
+        sol = self.sol
+        
+        par.alpha = x[0]
+        par.sigma = x[1]
 
-        pass
+        self.solve_wF_vec()
+        self.run_regression()
+
+        loss = (par.beta0_target - sol.beta0)**2 + (par.beta1_target - sol.beta1)**2
+
+        return loss
+
+    def estimate(self, alpha=None, sigma=None):
+        
+        par = self.par
+        sol = self.sol
+        opt_as = SimpleNamespace() 
+        
+        bounds = [(1e-8,24-1e-8)]*2
+        guess = [0.5, 1]
+
+        solution4a = optimize.minimize(self.loss,
+                                   guess,
+                                   method='Nelder-Mead',
+                                   bounds=bounds,
+                                   tol=1e-10)
+        
+        opt_as.alpha4 = solution4a.x[0]
+        opt_as.sigma4 = solution4a.x[1]
+        
+        print(f' optimal alpha = {opt_as.alpha4}')
+        print(f' optimal sigma = {opt_as.sigma4}')
+
+        return solution4a
