@@ -57,21 +57,21 @@ class modelclass():
         allvarnames = household + firm + prices 
         for varname in allvarnames:
             sim.__dict__[varname] = np.nan*np.ones(par.simT)
-        # OBS! Forklar denne kode! 
 
     def simulate(self,do_print=True):
         """ simulate model """
         
+        # a. Setting time
         t0 = time.time() 
 
         par = self.par 
         sim = self.sim
 
-        # a. Initial values for simulation 
+        # b. Initial values for simulation 
         sim.K[0] = par.K_ini
         sim.L[0] = par.L_ini
 
-        # b. Simulate the model 
+        # c. Simulate the model 
         for t in range(par.simT):
 
             # i. Simulate before s 
@@ -98,7 +98,7 @@ class modelclass():
     def find_s_bracket(self,par,sim,t,maxiter=500,do_print=False):
         """ find bracket for s to search in """
 
-        # a. Minimum/maximum bracket 
+        # a. Setting minimum and maximum bracket 
         s_min = 0.0 + 1e-8 # save almost nothing 
         s_max = 1.0 - 1e-8 # save almost everything 
 
@@ -107,11 +107,11 @@ class modelclass():
         sign_max = np.sign(value)
         if do_print: print(f'euler-error for s = {s_max:12.3f} = {value:12.3f}')
 
-        # c. Find brackets 
-        lower = s_min 
-        upper = s_max 
+        # c. Finding brackets 
+        lower = s_min # lower bracket
+        upper = s_max  # upper bracket
 
-        it = 0 # OBS! Hvad gør denne? 
+        it = 0 
         while it < maxiter: 
 
             # i. Midpoint and value 
@@ -124,7 +124,7 @@ class modelclass():
             valid = not np.isnan(value)
             correct_sign = np.sign(value)*sign_max < 0
         
-            # iii. Next step
+            # iii. Doing a loop and finding the exact brackets
             if valid and correct_sign:
                 s_min = s
                 s_max = upper
@@ -147,9 +147,10 @@ class modelclass():
         self.simulate_after_s(par,sim,t,s)
         self.simulate_before_s(par,sim,t+1)
 
+        # b. Defining beta
         par.beta = 1/(1+par.rho)
 
-        # b. Euler equation 
+        # c. Euler equation 
         LHS = sim.C1[t]**(-1) 
         RHS = (1+sim.r[t+1])*par.beta * sim.C2[t+1]**(-1)
 
@@ -158,33 +159,35 @@ class modelclass():
     def simulate_before_s(self,par,sim,t):
         """ simulate forward """
 
+        # a. Setting K and L for different time periods
         if t == 0: 
             sim.K[t] = par.K_ini
             sim.L[t] = par.L_ini
         if t > 0:
             sim.L[t] = sim.L[t-1]*(1+par.n)
         
-        # a. Production 
+        # b. Production 
         sim.Y[t] = sim.K[t]**par.alpha * (sim.L[t])**(1-par.alpha)
 
-        # b. Factor prices 
+        # c. Factor prices 
         sim.r[t] = par.alpha * sim.K[t]**(par.alpha-1) * (sim.L[t])**(1-par.alpha)
         sim.w[t] = (1-par.alpha) * sim.K[t]**(par.alpha) * (sim.L[t])**(-par.alpha)
 
-        # c. Consumption before s 
+        # d. Consumption before s 
         sim.C2[t] = (1+sim.r[t])*(sim.K[t]) 
     
     def simulate_after_s(self,par,sim,t,s):
         """ simulate forward """
 
+        # a. Defining capital accumulation
         sim.k[t] = sim.K[t]/sim.L[t] # capital per capita 
 
-        # a. Consumption of young 
-        sim.C1[t] = (1-par.tau)*sim.w[t]*(1.0-s) * sim.L[t] # Skal denne ændres?
+        # b. Consumption of young 
+        sim.C1[t] = (1-par.tau)*sim.w[t]*(1.0-s) * sim.L[t] 
 
-        # b. End-of-periods stock 
+        # c. End-of-periods stock 
         I = sim.Y[t] - sim.C1[t] - sim.C2[t]
-        sim.K[t+1] = sim.K[t]+I # Skal det være store eller lille k her??
+        sim.K[t+1] = sim.K[t]+I
 
     def sim_results(self):
 
@@ -202,7 +205,7 @@ class modelclass():
         sim.K[0] = par.K_ini
         sim.L[0] = par.L_ini
 
-        # c. Simulating t = 0 and t 
+        # c. Simulating for t = 0 and t = 1
         self.simulate_before_s(par,sim,t=0)
         print('Consumption by old people in period t = 0',f'{sim.C2[0] = : .3f}')
 
@@ -225,6 +228,3 @@ class modelclass():
         LHS_Euler = sim.C1[18]**(-1)
         RHS_Euler = (1+sim.r[19])*par.beta * sim.C2[19]**(-1)
         print("euler error after model has been simulated", LHS_Euler-RHS_Euler)
-
-        # e. Save steady state for this version
-        sim.k_orig=sim.k.copy()
