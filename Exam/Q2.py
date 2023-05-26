@@ -22,7 +22,7 @@ class examclass2_2():
 
         par = self.par
 
-        # a. Preferences 
+        # a. Parameter values  
         par.eta_val = 0.5
         par.w_val = 1.0 
         par.rho_val = 0.90
