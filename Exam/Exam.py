@@ -17,9 +17,8 @@ class examclass1():
         if do_print: print('calling .setup()')
         self.setup()
 
-
     def setup(self):
-        """ baseline parameters """
+        """ baseline parameters and set 1 + set 2 parameters """
 
         par = self.par
 
@@ -40,11 +39,29 @@ class examclass1():
         par.sigma2 = 1.5 
         par.epsilon2 = 1.0
 
-    def optimal_tau(self):
+    def expressions(self,tau):
+        """ Calculating utility for baseline parameters """
 
+        par = self.par
+
+        # Defining L, G and V
+        L = ((-par.kappa*par.nu+np.sqrt(par.nu*(4*par.alpha*((1-tau)*par.w)**2+par.kappa**2*par.nu))))/(2*par.nu*(1-tau)*par.w)
+
+        G = tau*par.w*L
+
+        V = np.log(((par.kappa+(1-tau)*par.w*L)**par.alpha)*G**(1-par.alpha))-par.nu*(L**2)/2
+
+        # Setting -V since we want to maximize
+        return -V
+    
+    def optimal_tau(self):
+        """ Calculating optimal tau for baseline parameters """
+
+        # Setting bounds and guess
         bounds = [(0,1)]
         guess = 0.7
 
+        # Optimize
         solution = optimize.minimize(self.expressions,
                                    guess,
                                    method='Nelder-Mead',
@@ -52,97 +69,99 @@ class examclass1():
 
         opt_tau = solution.x[0]
         
-        print(f'Optimal tau = {opt_tau}')
+        # Printing the result
+        print(f'Optimal tau = {opt_tau:.4}')
 
         return solution
-
-    def expressions(self,tau):
-
-        par = self.par
-
-        L = ((-par.kappa*par.nu+np.sqrt(par.nu*(4*par.alpha*((1-tau)*par.w)**2+par.kappa**2*par.nu))))/(2*par.nu*(1-tau)*par.w)
-        G = tau*par.w*L
-
-        V = np.log(((par.kappa+(1-tau)*par.w*L)**par.alpha)*G**(1-par.alpha))-par.nu*(L**2)/2
-
-        return -V
     
     def calc_utility1(self,x):
-        """ calculates utility """
+        """ Calculating utility for set 1 parameters """
 
         L = x[0]
         tau = x[1]
 
         par = self.par
 
+        # Defining G and utility for set 1 parameters
         G1 = tau * par.w * L
 
         utility = ((((par.alpha*(par.kappa+(1-tau)*par.w*L)**((par.sigma1-1)/par.sigma1) + (1-par.alpha)*G1**((par.sigma1-1)/par.sigma1)))**(par.sigma1/(par.sigma1-1)))**(1-par.rho1)-1)/(1-par.rho1)
 
         disutility = par.nu*(L**(1+par.epsilon1)/(1+par.epsilon1))
 
+        # Setting - in front since we want to maximize
         return -utility + disutility
     
     def optimal_L1(self,tau):
+        """ Calculating optimal L and G for set 1 parameters """
 
         par = self.par 
         
+        # Setting bounds and guess
         bounds = [(1e-8,24)]
         x0 = [12, 0.5]
 
+        # Optimize
         solution1 = optimize.minimize(self.calc_utility1,
                                    x0,
                                    method='Nelder-Mead',
                                    bounds=bounds)
 
         opt_L = solution1.x[0]
-        optimal_tau = tau
+        opt_tau_new = solution1.x[1]
 
-        G_opt = optimal_tau*par.w*opt_L
+        G_opt = tau*par.w*opt_L
 
+        # Print results
         print(f'Optimal L = {opt_L}')
         print(f'Optimal G = {G_opt}')
 
-        return opt_L, optimal_tau
-
+        return opt_tau_new
 
     def calc_utility2(self,x):
-        """ calculates utility """
+        """ Calculating utility for set 2 parameters """
 
         L = x[0]
         tau = x[1]
 
         par = self.par
 
+        # Defining G and utility for set 2 parameters
         G2 = tau * par.w * L
 
         utility2 = ((((par.alpha*(par.kappa+(1-tau)*par.w*L)**((par.sigma2-1)/par.sigma2) + (1-par.alpha)*G2**((par.sigma2-1)/par.sigma2)))**(par.sigma2/(par.sigma2-1)))**(1-par.rho2)-1)/(1-par.rho2)
 
         disutility2 = par.nu*(L**(1+par.epsilon2)/(1+par.epsilon2))
 
+        # Setting - in front since we want to maximize
         return -utility2 + disutility2
     
     def optimal_L2(self,tau):
+        """ Calculating optimal L and G for set 2 parameters """
 
         par = self.par 
         
+        # Setting bounds and guess
         bounds = [(1e-8,24)]
         x0 = [12, 0.5]
 
-        solution1 = optimize.minimize(self.calc_utility2,
+        # Optimize
+        solution2 = optimize.minimize(self.calc_utility2,
                                    x0,
                                    method='Nelder-Mead',
                                    bounds=bounds)
 
-        opt_L2 = solution1.x[0]
-        optimal_tau2 = tau
+        opt_L2 = solution2.x[0]
+        opt_tau_new2 = solution2.x[1]
 
-        G_opt2 = optimal_tau2*par.w*opt_L2
+        G_opt2 = tau*par.w*opt_L2
 
+        # Print results
         print(f'Optimal L = {opt_L2}')
         print(f'Optimal G = {G_opt2}')
 
-        return opt_L2, optimal_tau2
+        return opt_tau_new2
+
 
 class examclass2():
 
