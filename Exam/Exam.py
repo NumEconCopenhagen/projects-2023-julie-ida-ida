@@ -22,43 +22,28 @@ class examclass1():
         """ baseline parameters """
 
         par = self.par
-        sol = self.sol
+        sol = self.sol 
 
-        # a. Parameter values  
+        # Baseline parameters 
         par.alpha = 0.5
         par.kappa = 1.0 
         par.nu = 1/(2*16**2)
         par.w = 1.0
         par.tau = 0.30
-        opt_tau = None
+
+        # Set 1 parameters 
+        par.rho1 = 1.001
+        par.sigma1 = 1.001 
+        par.epsilon1 = 1.0
+
+        # Set 2 parameters 
+        par.rho2 = 1.5
+        par.sigma2 = 1.5 
+        par.epsilon2 = 1.0
 
         sol.L = []
 
-    def calc_utility(self):
-        """ calculate utility """
-
-        par = self.par
-        sol = self.sol
-
-        # a. Consumption 
-        C = par.kappa+(1-par.tau)*par.w*sol.L
-
-        # b. Government consumption 
-        G = par.tau*par.w*sol.L
-
-        # c. Utility 
-        utility = np.fmax(np.log(C**par.alpha * G**(1-par.alpha)))
-
-        # d. Disutlity of work
-        disutility = par.nu*((sol.L**2))/2
-        
-        return utility - disutility
-
-    def opt_tau(self):
-
-        par = self.par
-        sol = self.sol
-        opt = SimpleNamespace() 
+    def optimal_tau(self):
 
         bounds = [(0,1)]
         guess = 0.7
@@ -77,7 +62,6 @@ class examclass1():
     def expressions(self,tau):
 
         par = self.par
-        sol = self.sol
 
         L = ((-par.kappa*par.nu+np.sqrt(par.nu*(4*par.alpha*((1-tau)*par.w)**2+par.kappa**2*par.nu))))/(2*par.nu*(1-tau)*par.w)
         G = tau*par.w*L
@@ -85,6 +69,50 @@ class examclass1():
         V = np.log(((par.kappa+(1-tau)*par.w*L)**par.alpha)*G**(1-par.alpha))-par.nu*(L**2)/2
 
         return -V
+    
+    def calc_utility(self,tau):
+        """ calculates utility """
+
+        par = self.par 
+        sol = self.sol 
+
+        G1 = tau*par.w*sol.L
+        utility = ((((par.alpha*(par.kappa+(1-par.tau)*par.w*sol.L)**((par.sigma1-1)/par.sigma1)*(1-par.alpha)*G1**((par.sigma1-1)/par.sigma1))**(par.sigma1/(par.sigma1-1)))**(1-par.rho1))-1)/(1-par.rho1)
+        disutility = par.nu*(sol.L**(1+par.epsilon1))/(1+par.epsilon1)
+
+        return -utility + disutility
+    
+    def optimal_L(self):
+
+        par = self.par 
+        sol = self.sol 
+        
+        bounds = [(0,24)]
+        guess = 12
+
+        solution1 = optimize.minimize(self.calc_utility,
+                                   guess,
+                                   method='Nelder-Mead',
+                                   bounds=bounds)
+
+        opt_L = solution1.x[0]
+        sol.L.append(opt_L)
+        
+        print(f'Optimal L = {opt_L}')
+    
+        G1_new = self.optimal_tau.opt_tau*par.w*opt_L
+
+        print(f'Optimal G = {G1_new}')
+
+        return solution1
+
+
+    #def general_form(self):
+        
+        #par = self.par 
+
+       # V_new = ((((par.alpha*(par.kappa+(1-par.tau)*par.w*L)**((par.sigma1-1)/par.sigma1)*(1-par.alpha)*G**((par.sigma1-1)/par.sigma1))**(par.sigma1/(par.sigma1-1)))**(1-par.rho1))-1)/(1-par.rho1)-par.nu*(L**(1+par.epsilon1))/(1+par.epsilon1)
+
 
 class examclass2():
 
