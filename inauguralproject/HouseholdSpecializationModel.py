@@ -64,7 +64,7 @@ class HouseholdSpecializationModelClass:
 
         # c. Total consumption utility
         Q = C**par.omega*H**(1-par.omega)
-        utility = np.fmax(Q,1e-8)**(1-par.rho)/(1-par.rho) #OBS! Hvorfor skriver man Q,1e-8 her? 
+        utility = np.fmax(Q,1e-8)**(1-par.rho)/(1-par.rho) 
 
         # d. Disutlity of work
         epsilon_ = 1+1/par.epsilon
