@@ -85,7 +85,6 @@ class modelclass():
             obj = lambda s: self.calc_euler_error(s,par,sim,t=t)
             result = optimize.root_scalar(obj,bracket=(s_min,s_max),method='bisect') 
             s = result.root
-            # OBS! Forklar denne kode! 
 
             # iv. Log optimal savings rate 
             sim.s[t] = s
