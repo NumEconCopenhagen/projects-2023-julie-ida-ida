@@ -22,7 +22,6 @@ class examclass1():
         """ baseline parameters """
 
         par = self.par
-        sol = self.sol 
 
         # Baseline parameters 
         par.alpha = 0.5
@@ -41,8 +40,6 @@ class examclass1():
         par.sigma2 = 1.5 
         par.epsilon2 = 1.0
 
-        sol.L = []
-
     def optimal_tau(self):
 
         bounds = [(0,1)]
@@ -58,7 +55,7 @@ class examclass1():
         print(f'Optimal tau = {opt_tau}')
 
         return solution
-    
+
     def expressions(self,tau):
 
         par = self.par
@@ -70,49 +67,82 @@ class examclass1():
 
         return -V
     
-    def calc_utility(self,tau):
+    def calc_utility1(self,x):
         """ calculates utility """
 
-        par = self.par 
-        sol = self.sol 
+        L = x[0]
+        tau = x[1]
 
-        G1 = tau*par.w*sol.L
-        utility = ((((par.alpha*(par.kappa+(1-par.tau)*par.w*sol.L)**((par.sigma1-1)/par.sigma1)*(1-par.alpha)*G1**((par.sigma1-1)/par.sigma1))**(par.sigma1/(par.sigma1-1)))**(1-par.rho1))-1)/(1-par.rho1)
-        disutility = par.nu*(sol.L**(1+par.epsilon1))/(1+par.epsilon1)
+        par = self.par
+
+        G1 = tau * par.w * L
+
+        utility = ((((par.alpha*(par.kappa+(1-tau)*par.w*L)**((par.sigma1-1)/par.sigma1) + (1-par.alpha)*G1**((par.sigma1-1)/par.sigma1)))**(par.sigma1/(par.sigma1-1)))**(1-par.rho1)-1)/(1-par.rho1)
+
+        disutility = par.nu*(L**(1+par.epsilon1)/(1+par.epsilon1))
 
         return -utility + disutility
     
-    def optimal_L(self):
+    def optimal_L1(self,tau):
 
         par = self.par 
-        sol = self.sol 
         
-        bounds = [(0,24)]
-        guess = 12
+        bounds = [(1e-8,24)]
+        x0 = [12, 0.5]
 
-        solution1 = optimize.minimize(self.calc_utility,
-                                   guess,
+        solution1 = optimize.minimize(self.calc_utility1,
+                                   x0,
                                    method='Nelder-Mead',
                                    bounds=bounds)
 
         opt_L = solution1.x[0]
-        sol.L.append(opt_L)
-        
+        optimal_tau = tau
+
+        G_opt = optimal_tau*par.w*opt_L
+
         print(f'Optimal L = {opt_L}')
+        print(f'Optimal G = {G_opt}')
+
+        return opt_L, optimal_tau
+
+
+    def calc_utility2(self,x):
+        """ calculates utility """
+
+        L = x[0]
+        tau = x[1]
+
+        par = self.par
+
+        G2 = tau * par.w * L
+
+        utility2 = ((((par.alpha*(par.kappa+(1-tau)*par.w*L)**((par.sigma2-1)/par.sigma2) + (1-par.alpha)*G2**((par.sigma2-1)/par.sigma2)))**(par.sigma2/(par.sigma2-1)))**(1-par.rho2)-1)/(1-par.rho2)
+
+        disutility2 = par.nu*(L**(1+par.epsilon2)/(1+par.epsilon2))
+
+        return -utility2 + disutility2
     
-        G1_new = self.optimal_tau.opt_tau*par.w*opt_L
+    def optimal_L2(self,tau):
 
-        print(f'Optimal G = {G1_new}')
-
-        return solution1
-
-
-    #def general_form(self):
+        par = self.par 
         
-        #par = self.par 
+        bounds = [(1e-8,24)]
+        x0 = [12, 0.5]
 
-       # V_new = ((((par.alpha*(par.kappa+(1-par.tau)*par.w*L)**((par.sigma1-1)/par.sigma1)*(1-par.alpha)*G**((par.sigma1-1)/par.sigma1))**(par.sigma1/(par.sigma1-1)))**(1-par.rho1))-1)/(1-par.rho1)-par.nu*(L**(1+par.epsilon1))/(1+par.epsilon1)
+        solution1 = optimize.minimize(self.calc_utility2,
+                                   x0,
+                                   method='Nelder-Mead',
+                                   bounds=bounds)
 
+        opt_L2 = solution1.x[0]
+        optimal_tau2 = tau
+
+        G_opt2 = optimal_tau2*par.w*opt_L2
+
+        print(f'Optimal L = {opt_L2}')
+        print(f'Optimal G = {G_opt2}')
+
+        return opt_L2, optimal_tau2
 
 class examclass2():
 
@@ -120,7 +150,7 @@ class examclass2():
         """ create the model """
         if do_print: print('initializing the model:')
 
-        # a. Create namespaces 
+        # Create namespaces 
         self.par = SimpleNamespace()
 
         if do_print: print('calling .setup()')
@@ -132,7 +162,7 @@ class examclass2():
 
         par = self.par
 
-        # a. Parameter values  
+        # Parameter values  
         par.eta_val = 0.5
         par.w_val = 1.0 
         par.rho_val = 0.90
@@ -140,7 +170,7 @@ class examclass2():
         par.sigma_eps = 0.10
         par.R_val = (1+0.01)**(1/12)
         
-        # b. Planning horizon 
+        # Planning horizon 
         par.T = 10*12 # months 
 
 
@@ -148,14 +178,14 @@ class examclass2():
 
         par = self.par
 
-        # a. Defining shocks and optimal l 
+        # Defining shocks and optimal l 
         kappa = np.exp(shocks) # exponential due to log 
-        opt_l = ((1-par.eta_val)*kappa/par.w_val)**(1/par.eta_val) # optimal l from Q1
+        opt_l = ((1-par.eta_val)*kappa/par.w_val)**(1/par.eta_val) # optimal l 
 
-        # b. Creating an empty list to store the solution
+        # Creating an empty list to store the solution
         value = []
 
-        # c. For loop 
+        # For loop 
         for t in range(par.T):
             profit = kappa[t]*opt_l[t]**(1-par.eta_val)-par.w_val*opt_l[t] # defining profit from optimal l 
             adjustment_cost = (opt_l[t] != opt_l[t-1]) * par.iota_val # defining adjustment cost for hiring/firing 
@@ -167,95 +197,11 @@ class examclass2():
 
         par = self.par
 
-        # a. Defining the distibution for the shocks 
+        # Defining the distibution for the shocks 
         shocks = np.random.normal(loc=-0.5 * par.sigma_eps**2, scale=par.sigma_eps, size=(K, par.T))
         values = np.zeros(K) 
 
-        # b. For loop 
-        for k in range(K):
-            values[k] = self.ex_post_value(shocks[k])
-
-        return np.mean(values)
-    
-
-
-
-
-
-
-#### BRUGES DET HER? ####
-class examclass2_3():
-    
-    def __init__(self,do_print=True):
-        """ create the model """
-        if do_print: print('initializing the model:')
-
-        # a. Create namespaces 
-        self.par = SimpleNamespace()
-
-        if do_print: print('calling .setup()')
-        self.setup()
-
-
-    def setup(self):
-        """ baseline parameters """
-
-        par = self.par
-
-        # a. Preferences 
-        par.eta_val = 0.5
-        par.w_val = 1.0 
-        par.rho_val = 0.90
-        par.iota_val = 0.01
-        par.sigma_eps = 0.10
-        par.R_val = (1+0.01)**(1/12)
-        par.Delta = 0.05
-        
-        # b. Planning horizon 
-        par.T = 10*12 # months 
-
-    def ex_post_value(self,shocks):
-
-        par = self.par
-
-        # a. Defining shocks and optimal l 
-        kappa = np.exp(shocks) # exponential due to log 
-        opt_l = ((1-par.eta_val)*kappa/par.w_val)**(1/par.eta_val) # optimal l from Q1
-        l = l[t-1]
-
-        for t in range(par.T):
-            employee = (l[t-1] - opt_l[t])  
-
-        #if employee>par.Delta:
-        #    l = opt_l
-        #else: 
-        #    l = l[t-1]
-
-        # b. Creating an empty list to store the solution
-        value = []
-
-        # c. For loop 
-        for t in range(par.T):
-            if employee > par.Delta:
-                profit = kappa[t]*opt_l[t]**(1-par.eta_val)-par.w_val*opt_l[t] # defining profit from optimal l 
-                adjustment_cost = (opt_l[t] != opt_l[t-1]) * par.iota_val # defining adjustment cost for hiring/firing 
-                value.append(par.R_val**(-t)*(profit-adjustment_cost))
-            else:
-                profit = kappa[t]*l[t]**(1-par.eta_val)-par.w_val*l[t] # defining profit from optimal l 
-                adjustment_cost = (l[t] != l[t-1]) * par.iota_val # defining adjustment cost for hiring/firing 
-                value.append(par.R_val**(-t)*(profit-adjustment_cost))
-    
-        return np.sum(value)
-
-    def ex_ante_value(self,K):
-
-        par = self.par 
-
-        # a. Defining the distibution for the shocks 
-        shocks = np.random.normal(loc=-0.5 * par.sigma_eps**2, scale=par.sigma_eps, size=(K, par.T))
-        values = np.zeros(K) 
-
-        # b. For loop 
+        # For loop 
         for k in range(K):
             values[k] = self.ex_post_value(shocks[k])
 
