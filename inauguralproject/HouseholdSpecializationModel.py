@@ -49,7 +49,6 @@ class HouseholdSpecializationModelClass:
         """ calculate utility """
 
         par = self.par
-        sol = self.sol
 
         # a. Consumption of market goods
         C = par.wM*LM + par.wF*LF
@@ -66,7 +65,7 @@ class HouseholdSpecializationModelClass:
         Q = C**par.omega*H**(1-par.omega)
         utility = np.fmax(Q,1e-8)**(1-par.rho)/(1-par.rho) 
 
-        # d. Disutlity of work
+        # d. Disutility of work
         epsilon_ = 1+1/par.epsilon
         TM = LM+HM
         TF = LF+HF
@@ -77,8 +76,6 @@ class HouseholdSpecializationModelClass:
     def solve_discrete(self,do_print=False):
         """ solve model discretely """
         
-        par = self.par
-        sol = self.sol
         opt = SimpleNamespace()
         
         # a. All possible choices
@@ -139,10 +136,6 @@ class HouseholdSpecializationModelClass:
     def solve_con(self,do_print=False):
         """ solve model continously """
 
-        par = self.par
-        sol = self.sol
-        opt = SimpleNamespace()  
-
         def objective(x):
             return -self.calc_utility(*x)
 
@@ -170,7 +163,6 @@ class HouseholdSpecializationModelClass:
        
         par = self.par
         sol = self.sol
-        opt = SimpleNamespace() 
 
         for i,wF in enumerate(par.wF_vec):
             par.wF = wF
@@ -224,8 +216,6 @@ class HouseholdSpecializationModelClass:
 
     def estimate(self, alpha=None, sigma=None):
         
-        par = self.par
-        sol = self.sol
         opt_as = SimpleNamespace() 
         
         bounds = [(1e-8,24-1e-8)]*2
