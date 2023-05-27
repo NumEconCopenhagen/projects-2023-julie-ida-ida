@@ -1,9 +1,7 @@
 # Julie-Ida-Ida
 
-**Group members:**
-- Julie Danneberg Voss - rqx424
-- Ida Marie Krogh Jensen - sfr670
-- Ida Margrethe Stagsted - nmx956
+**Group name:**
+Fri-953598-2
 
 This repository contains  
 1. Inaugural project. We look at a household where we look at how the wage affects time used working at home. Furthermore, we see how the allocation of time changes for different values of the parameters. 
