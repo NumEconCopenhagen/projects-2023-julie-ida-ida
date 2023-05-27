@@ -1,5 +1,3 @@
-# Julie-Ida-Ida
-
 **Group name:**
 Fri-953598-2
 
