@@ -113,8 +113,8 @@ class examclass1():
         G_opt = tau*par.w*opt_L
 
         # Print results
-        print(f'Optimal L = {opt_L}')
-        print(f'Optimal G = {G_opt}')
+        print(f'Optimal L = {opt_L:.6}')
+        print(f'Optimal G = {G_opt:.6}')
 
         return opt_tau_new
 
@@ -157,8 +157,8 @@ class examclass1():
         G_opt2 = tau*par.w*opt_L2
 
         # Print results
-        print(f'Optimal L = {opt_L2}')
-        print(f'Optimal G = {G_opt2}')
+        print(f'Optimal L = {opt_L2:.6}')
+        print(f'Optimal G = {G_opt2:.6}')
 
         return opt_tau_new2
 
@@ -225,3 +225,51 @@ class examclass2():
             values[k] = self.ex_post_value(shocks[k])
 
         return np.mean(values)
+    
+    def ex_post_value_delta(self, shocks, delta=0):
+
+        par = self.par
+
+        # Defining shocks and optimal l
+        kappa1 = np.exp(shocks)  # exponential due to log
+        opt_l1 = ((1 - par.eta_val) * kappa1 / par.w_val) ** (1 / par.eta_val)  # optimal l
+
+        # Creating an empty list to store the solution
+        value1 = []
+
+        # For loop
+        previous_l = opt_l1[0]  # Set initial value of previous_l
+
+        for t in range(par.T):
+            if abs(opt_l1[0] - previous_l) > delta:
+                current_l = opt_l1[0]
+            else:
+                current_l = previous_l
+            
+            profit = kappa1[t] * current_l ** (1 - par.eta_val) - par.w_val * current_l  # defining profit from optimal l 
+            adjustment_cost = (current_l != previous_l) * par.iota_val if t > 0 else 0  # defining adjustment cost for hiring/firing 
+            value1.append(par.R_val ** (-t) * (profit - adjustment_cost))
+
+            previous_l = current_l
+
+        return np.sum(value1)
+
+    def optimal_delta(self):
+        """ Calculating optimal Delta """
+        
+        # Setting bounds and guess
+        bounds = [(1e-8,24)]
+        x0 = [12, 0.5]
+
+        # Optimize
+        solution4 = optimize.minimize(self.ex_post_value_delta,
+                                   x0,
+                                   method='Nelder-Mead',
+                                   bounds=bounds)
+
+        opt_delta = solution4.x[0]
+
+        # Print results
+        print(f'Optimal Delta = {opt_delta}')
+
+        return solution4
